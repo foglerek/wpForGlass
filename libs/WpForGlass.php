@@ -906,12 +906,12 @@ class WpForGlass {
 			echo '<select id="default_tag" name="wpForGlass[default_tag]">';
 			foreach ($tags as $tag)
 			{
-				echo '<option value="'.get_tag_link($tag->term_id).'">'.$tag->name.'</option>';
+				echo '<option value="' . get_tag_link( $tag->term_id ) . '">' . esc_html( $tag->name ) . '</option>';
 			}
 			echo "</select>";
 		} else {
 			// we don't have tags at all
-			echo "Look's like you don't have any tags setup in your Wordpress Install, set some up and then come back to this page!";
+			esc_html_e( "Look's like you don't have any tags setup in your Wordpress Install, set some up and then come back to this page!", 'wpforglass' );
 		}
 		echo '</div>';
 	}
