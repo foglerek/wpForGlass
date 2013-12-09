@@ -22,10 +22,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-require_once 'libs/WpForGlass.php';
+require_once( plugin_dir_path( __FILE__ ) . 'libs/WpForGlass.php' );
 $wpForGlass = new WpForGlass();
-$wpForGlass->setupWPAdminPage();
 
+if ( is_admin() ) {
+	$wpForGlass->setupWPAdminPage();
+}
 
 register_deactivation_hook(__FILE__, array($wpForGlass,'deactivate'));
 

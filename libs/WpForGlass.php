@@ -1,32 +1,28 @@
 <?php
 
-require_once 'google-api-php-client/src/Google_Client.php';
-require_once 'google-api-php-client/src/contrib/Google_Oauth2Service.php';
-require_once 'google-api-php-client/src/contrib/Google_MirrorService.php';
+require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/Google_Client.php' );
+require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_Oauth2Service.php' );
+require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_MirrorService.php' );
 
 class WFGShareableContact extends Google_Contact {
-	
+
 	public $sharingFeatures;
-	
+
 	public function setSharingFeatures(/* array(Google_Command) */ $sharingFeatures) {
-    	$this->assertIsArray($sharingFeatures, 'Google_Command', __METHOD__);
-    	$this->sharingFeatures = $sharingFeatures;
-  	}
-	
-	
-	
+		$this->assertIsArray( $sharingFeatures, 'Google_Command', __METHOD__ );
+		$this->sharingFeatures = $sharingFeatures;
+	}
+
 }
 
-
 class WpForGlass {
-	
+
 	const DEBUG = false;
 
 	var $settings = "";
 	var $error;
 	var $conflict;
-	
-	
+
 	public function __construct(){
 		$this->settings = "";
 
@@ -39,36 +35,34 @@ class WpForGlass {
 		define('WPFORGLASS_DEFAULT_IMAGE_SIZE', 'full');
 		define('WPFORGLASS_DEFAULT_POST_STATUS', 'publish');
 		define('WPFORGLASS_DEFAULT_TITLE_PREFIX', '#throughglass');
-		
+
 		$originalNotifyUrl = plugins_url('oauth/notify.php',__FILE__);
 		$httpsNotifyUrl = preg_replace("/^http:/", "https:", $originalNotifyUrl);
-		
+
 		define('WPFORGLASS_NOTIFY_URL', $httpsNotifyUrl);
 	}
-	
-	
+
 	public function setupWPAdminPage()
 	{
 		add_action('admin_init', array($this, 'adminInit'));
 		add_action('admin_menu', array($this, 'adminMenu'));
 	}
-	
-	
+
 	/**
-	* sets up options page and sections.
-	*/
-	function adminInit() 
+	 * sets up options page and sections.
+	 */
+	function adminInit()
 	{
 		$this->checkForPostUpdates();
 		$this->checkForOAuthSuccess();
-		
+
 		add_filter('plugin_action_links', array($this, 'showPluginActionLinks'),10,5);
-		
+
 		register_setting('wpforglass',	'wpforglass', 	array($this, 'formValidate'));
-		
+
 		add_settings_section('wpforglass-instructions', __('wpForGlass Setup Instructions', 'wpforglass'), array($this, 'showInstructions'), 'wpforglass');
 		add_settings_section('wpforglass-api', __('Google Mirror API Settings', 'wpforglass'), '__return_false', 'wpforglass');
-	
+
 		add_settings_field('api-client-key', __('Mirror API Client ID', 'wpforglass'), array($this, 'askClientId'), 'wpforglass', 'wpforglass-api');
 		add_settings_field('api-client-secret', __('Mirror API Client Secret', 'wpforglass'), array($this, 'askClientSecretKey'), 'wpforglass', 'wpforglass-api');
 		add_settings_field('api-simple-key', __('Your Google API Simple Key', 'wpforglass'), array($this, 'askSimpleKey'), 'wpforglass', 'wpforglass-api');
@@ -80,7 +74,7 @@ class WpForGlass {
 		if ($this->hasAuthenticated() && $this->isConfigured()){
 			add_settings_section('wpforglass-tasks', __('CRON Settings', 'wpforglass'), array($this, 'showCronInstructions'), 'wpforglass');
 			add_settings_field('cron-tasks-line', __('CRONTab Entry', 'wpforglass'), array($this, 'showCronTabSettings'), 'wpforglass', 'wpforglass-tasks');
-	
+
 			add_settings_section('wpforglass-post', __('Default Post Settings (Optional)', 'wpforglass'), array($this, 'showDefaultPostInstructions'), 'wpforglass');
 			add_settings_field('wpforglass-post-type', __('Default Post Category', 'wpforglass'), array($this, 'askDefaultPostCats'), 'wpforglass', 'wpforglass-post');
 			add_settings_field('wpforglass-post-imagesize', __('Default Post Image Size', 'wpforglass'), array($this,'askDefaultImageSizes'),'wpforglass','wpforglass-post');
@@ -92,28 +86,26 @@ class WpForGlass {
 
 	function adminMenu()
 	{
-		$this->settings = add_options_page( 
-			__('wpForGlass Settings', 'wpforglass'), 
-			__('wpForGlass', 'wpforglass'), 
-			'manage_options', 
-			'wpforglass', 
+		$this->settings = add_options_page(
+			__('wpForGlass Settings', 'wpforglass'),
+			__('wpForGlass', 'wpforglass'),
+			'manage_options',
+			'wpforglass',
 			array($this,'showOptionsPage')
 		);
 		wp_register_style( 'WPFORGLASS_stylesheet', plugins_url('../css/wpforglass.css', __FILE__) );
-		wp_enqueue_style( 'WPFORGLASS_stylesheet' );	
+		wp_enqueue_style( 'WPFORGLASS_stylesheet' );
 	}
-
-
 
 	/**
 	 * Generates source of options page.
 	 */
-	function showOptionsPage() 
-	{		
+	function showOptionsPage()
+	{
 		if (!current_user_can('manage_options')){
 			wp_die( __('You do not have sufficient permissions to access this page.') );
 		}
-	
+
 		//are we configured?
 		if ($this->isConfigured()){
 			try {
@@ -123,10 +115,10 @@ class WpForGlass {
 
 				$redirect_base = WPFORGLASS_OAUTH_URL;
 				$redirect_base .= '?base='.admin_url()."options-general.php?page=wpforglass";
-				
+
 				if ($needs_reauth === true){
 					echo '<div class="error"><b>wpForGlass Error:</b> Looks like you need to <a href="'.$redirect_base.'">re-connect wpForGlass with your Google Account</a><br /></div>';
-				} 
+				}
 			} catch (Exception $e){
 				$redirect_base = WPFORGLASS_OAUTH_URL;
 				$redirect_base .= '?base='.admin_url()."options-general.php?page=wpforglass";
@@ -134,33 +126,31 @@ class WpForGlass {
 				echo '<div class="error"><b>wpForGlass Error:</b> Looks like you need to <a href="'.$redirect_base.'">re-connect wpForGlass with your Google Account</a><br /><code>'.$e->getMessage().'</code></div>';
 			}
 		}
-	
+
 		$plugin_icon = plugins_url('../img/icon32.png',__FILE__);
-	
+
 		?>
 		<div class="wrap">
-		    <h2><?php _e('wpForGlass Settings', 'wpforglass'); ?></h2>
-		    <div style="float: left;width: 100%;">
-		        <form method="post" action="<?php echo admin_url()."options-general.php?page=wpforglass"; ?>">
-		            <div class="stuffbox">
-		                <?php settings_fields('wpforglass'); ?>
-		                <?php do_settings_sections('wpforglass'); ?>
-		            </div>    
+			<h2><?php _e('wpForGlass Settings', 'wpforglass'); ?></h2>
+			<div style="float: left;width: 100%;">
+				<form method="post" action="<?php echo admin_url()."options-general.php?page=wpforglass"; ?>">
+					<div class="stuffbox">
+						<?php settings_fields('wpforglass'); ?>
+						<?php do_settings_sections('wpforglass'); ?>
+					</div>
 					<input type="hidden" name="update_made" value="1">
-		            <?php if ($this->hasAuthenticated() && $this->isConfigured()){ ?>
-			            <p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" /></p>
-		            <?php } else { ?>
-			            <p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Verify Your API Settings with Google &raquo;') ?>" /></p>
-		            <?php } ?>
-		        </form>
-		    </div>
+					<?php if ($this->hasAuthenticated() && $this->isConfigured()){ ?>
+						<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" /></p>
+					<?php } else { ?>
+						<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Verify Your API Settings with Google &raquo;') ?>" /></p>
+					<?php } ?>
+				</form>
+			</div>
 		</div>
 	<?php
 	} //showOptionsPage
 
-
-
-	function showInstructions(){ 
+	function showInstructions(){
 	
 		$http_auth_URL = WPFORGLASS_OAUTH_URL;
 		$https_auth_URL = preg_replace("/^http:/", " https:", WPFORGLASS_OAUTH_URL);
@@ -180,8 +170,6 @@ class WpForGlass {
 	
 	<?php } //showInstructions
 
-
-
 	// Following methods generate parts of settings and test forms.
 	function askClientId() {
 		echo '<div class="inside">';
@@ -191,8 +179,7 @@ class WpForGlass {
 		<?php
 		echo '</div>';
 	}
-	
-	
+
 	function askClientSecretKey()
 	{
 		echo '<div class="inside">';
@@ -205,15 +192,15 @@ class WpForGlass {
 			<br/><span class="setting-description"><small><em><?php _e('After successfully authenticating with the Mirror API, the data in this field will not be visible.', 'wpforglass'); ?></em></small></span>
 		<?php
 		} else {
-		?>	
-			<input id='api_client_secret' name='wpforglass[api_client_secret]' size='45' type='password' value="<?php esc_attr_e( $api_client_secret ); ?>" readonly /> 
+		?>
+			<input id='api_client_secret' name='wpforglass[api_client_secret]' size='45' type='password' value="<?php esc_attr_e( $api_client_secret ); ?>" readonly />
 			<br/><span class="setting-description"><small><em><?php _e('If you have reset your client secret and need to change it. You will have to de-activate the plugin, and re-activate it.', 'wpforglass'); ?></em></small></span>
 			
-		<?php		
+		<?php
 		}
 		echo '</div>';
 	}
-	
+
 	function askSimpleKey()
 	{
 		echo '<div class="inside">';
@@ -231,9 +218,9 @@ class WpForGlass {
 		
 		if (empty($contact_card_name)){
 		?>
-			<input id='contact_card_name' name='wpforglass[contact_card_name]' size='20' type='text' maxlength="20" value="<?php esc_attr_e( $contact_card_name ); ?>" />	
+			<input id='contact_card_name' name='wpforglass[contact_card_name]' size='20' type='text' maxlength="20" value="<?php esc_attr_e( $contact_card_name ); ?>" />
 			<br/><span class="setting-description"><small><em><?php _e('This is the name for the Google Glass Contact Card that you will share images to. Once you have set it, you will not be able to change it unless you de-activate the plugin.', 'wpforglass'); ?></em></small></span>
-			
+
 		<?php
 		} else {
 		?>
@@ -251,7 +238,7 @@ class WpForGlass {
 		</div>
 		<?php
 	}
-	
+
 	function showCronTabSettings(){
 		$curlCommand = "*/5 * * * * curl ".WPFORGLASS_CRON_PATH.' >/dev/null 2>&1';
 
@@ -260,15 +247,12 @@ class WpForGlass {
 		echo '<br/><span class="setting-description"><small><em>This is the value that you should place in your crontab, either manually, or through your hosting control panel.</em></small></span></div>';
 	}
 
-
-
-
 	//@TODO: add in form validation
 
 	/**
 	* Processes submitted settings from.
 	*/
-	function formValidate($input) 
+	function formValidate($input)
 	{
 		return null;
 	}
@@ -276,41 +260,39 @@ class WpForGlass {
 /******************************************************************
 **   Managing OAuth & Storing Data
 ******************************************************************/
-	
+
 	function checkForOAuthSuccess(){
 		if (isset($_GET['auth_code'])){
 			switch($_GET['auth_code']){
 				//successful auth the first time, set the auth flag
-				case "1":					
-					
+				case "1":
+
 					if (is_multisite()){
 						$options = get_site_option( 'wpforglass' );
 					} else {
 						$options = get_option( 'wpforglass' );
-					}		
-					
+					}
+
 					$options['has_authenticated'] = '1';
-					
+
 					if (is_multisite()){
 						$result = update_site_option('wpforglass', $options);
 					} else {
 						$result = update_option('wpforglass', $options);
 					}
-					
+
 					echo '<div class="updated">oAuth setup was successful. Now you can set your post defaults below, and setup the cron.</div>';
 					$this->logError('OAUTH was successful');
 				break;
 				//had to reconnect, do nothing
 				case "2":
-				
+
 				break;
 			}
 		}
 	}
 
-
 	function checkForPostUpdates(){
-
 
 		if (isset($_POST['update_made'])){
 			switch($_POST['update_made']){
@@ -327,10 +309,8 @@ class WpForGlass {
 				break;
 			}
 
-
 		}
 	}
-
 
 	function storeConsoleData(){
 		// pull the set options direct from the options list, set all of our values at once, and save back to the DB.
@@ -341,8 +321,8 @@ class WpForGlass {
 			$options = get_site_option( 'wpforglass' );
 		} else {
 			$options = get_option( 'wpforglass' );
-		}	
-		
+		}
+
 		$wpfg = $_POST['wpforglass'];
 
 		$options['api_client_id'] 		= $client_id			= $wpfg['api_client_id'];
@@ -353,19 +333,17 @@ class WpForGlass {
 		$options['default_post_category'] = $default_post_cat	= $wpfg['default_post_category'];
 		$options['default_image_size'] = $default_image_size	= $wpfg['default_image_size'];
 		$options['default_post_status'] = $default_post_status	= $wpfg['default_post_status'];
-		
 
 		$this->logError("Saving API-Client_Id: ". $client_id);
 		$this->logError("Saving API-Client_Secret: ". $client_secret);
 		$this->logError("Saving API Simple Key: ". $api_simple_key);
-		
+
 		if (is_multisite()){
 			$result = update_site_option('wpforglass', $options);
 		} else {
 			$result = update_option('wpforglass', $options);
 		}
 	}
-
 
 /******************************************************************
 **   Google Mirror API
@@ -378,12 +356,11 @@ class WpForGlass {
 			$options = get_site_option( 'wpforglass' );
 		} else {
 			$options = get_option( 'wpforglass' );
-		}		
-		
-		
+		}
+
 		$api_client_id 		= $options['api_client_id'];
 		$api_client_secret 	= $options['api_client_secret'];
-		$api_simple_key 	= $options['api_simple_key']; 
+		$api_simple_key 	= $options['api_simple_key'];
 
 		/*
 		$this->logError('----------------------------------------------');
@@ -400,7 +377,7 @@ class WpForGlass {
 		$client->setClientId($api_client_id);
 		$client->setClientSecret($api_client_secret);
 		$client->setDeveloperKey($api_simple_key);
-	
+
 		$client->setRedirectUri(WPFORGLASS_OAUTH_URL);
 
 		$client->setScopes(array('https://www.googleapis.com/auth/glass.timeline','https://www.googleapis.com/auth/glass.location','https://www.googleapis.com/auth/userinfo.profile'));
@@ -434,7 +411,6 @@ class WpForGlass {
 		$token_checker = new Google_Oauth2Service($client);
 		try {
 			$token_checker->userinfo->get();
-		
 		} catch (Google_ServiceException $e) {
 			$this->logError('user_needs_reauth throwing google_serviceexception >> '.$e->getMessage());
 			if ($e->getCode() == 401) {
@@ -449,7 +425,6 @@ class WpForGlass {
 		}
 		return false;
 	}
-
 
 	function insert_timeline_item($service, $timeline_item, $content_type, $attachment)
 	{
@@ -466,18 +441,17 @@ class WpForGlass {
 		}
 	}
 
-
 	/**
-	* Subscribe to notifications for the current user.
-	*
-	* @param Google_MirrorService $service Authorized Mirror service.
-	* @param string $collection Collection to subscribe to (supported
-	*                           values are "timeline" and "locations").
-	* @param string $user_token Opaque token used by the Service to
-	*                          identify the  user the notification pings
-	*                          are sent for (recommended).
-	* @param string $callback_url URL receiving notification pings (must be HTTPS).
-*/
+	 * Subscribe to notifications for the current user.
+	 *
+	 * @param Google_MirrorService $service Authorized Mirror service.
+	 * @param string $collection Collection to subscribe to (supported
+	 *                           values are "timeline" and "locations").
+	 * @param string $user_token Opaque token used by the Service to
+	 *                          identify the  user the notification pings
+	 *                          are sent for (recommended).
+	 * @param string $callback_url URL receiving notification pings (must be HTTPS).
+	 */
 	function subscribe_to_notifications($service, $collection, $user_token, $callback_url)
 	{
 		try {
@@ -514,11 +488,11 @@ class WpForGlass {
 	}
 
 	/**
-	* Delete a contact for the current user.
-	*
-	* @param Google_MirrorService $service Authorized Mirror service.
-	* @param string $contact_id ID of the Contact to delete.
-	*/
+	 * Delete a contact for the current user.
+	 *
+	 * @param Google_MirrorService $service Authorized Mirror service.
+	 * @param string $contact_id ID of the Contact to delete.
+	 */
 	function delete_contact($service, $contact_id) {
 		try {
 			$service->contacts->delete($contact_id);
@@ -528,12 +502,12 @@ class WpForGlass {
 	}
 
 	/**
-	* Download an attachment's content.
-	*
-	* @param string item_id ID of the timeline item the attachment belongs to.
-	* @param Google_Attachment $attachment Attachment's metadata.
-	* @return array
-	*/
+	 * Download an attachment's content.
+	 *
+	 * @param string item_id ID of the timeline item the attachment belongs to.
+	 * @param Google_Attachment $attachment Attachment's metadata.
+	 * @return array
+	 */
 	function download_attachment($item_id, $attachment) {
 		$request = new Google_HttpRequest($attachment->getContentUrl(), 'GET', null, null);
 		$httpRequest = Google_Client::$io->authenticatedRequest($request);
@@ -554,7 +528,7 @@ class WpForGlass {
 		$this->logError("----------------------");
 
 		// currently there are only two use-cases for an attachment as far as wordpress is concerned, video or images
-		// videos tend to take extra time to process and will most often have the isprocessing flag set to true 
+		// videos tend to take extra time to process and will most often have the isprocessing flag set to true
 		// furthermore, videos currently return an http 302 status redirect
 		// the best practice is to first check if an attachment is currently processing regardless of content-type
 		// if so, we'll put it into the queaue for retrieval later
@@ -566,7 +540,7 @@ class WpForGlass {
 		$attachmentInfo['attachmentId'] = '';
 		$attachmentInfo['contentType'] = $contentType;
 		$attachmentInfo['attachmentId'] = $attachment_id;
-		
+
 		if ($isProcessingContent == 0){
 			//content is ready to be sucked down
 			switch ($contentType){
@@ -577,7 +551,7 @@ class WpForGlass {
 				break;
 				case 'image/jpeg':
 				case 'image/png':
-				case 'image/gif':					
+				case 'image/gif':
 					$attachmentInfo['responseBody'] = $httpRequest->getResponseBody();
 				break;
 			}
@@ -591,7 +565,7 @@ class WpForGlass {
 
 	function download_movie($srcUrl, $dest){
 		$ch = curl_init($srcUrl);
-		$fp = fopen ($dest, 'w+');//This is the file where we save the    information
+		$fp = fopen ($dest, 'w+'); //This is the file where we save the information
 		curl_setopt($ch, CURLOPT_TIMEOUT, 180);
 		curl_setopt($ch, CURLOPT_FILE, $fp); // write curl response to file
 		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -602,25 +576,25 @@ class WpForGlass {
 
 	function add_content_to_queue($httpResponseCode, $contentType, $attachment_id, $item_id){
 		//the queue is a different set of WP 'options' that we've setup
-		
+
 		if (is_multisite()){
 			$options = get_site_option( 'wfg-cron' );
 		} else {
 			$options = get_option( 'wfg-cron' );
-		}		
+		}
 
 		$myArr = array();
-		$myArr['response'] 		= $httpResponseCode;
-		$myArr['mime'] 			= $contentType;
+		$myArr['response']      = $httpResponseCode;
+		$myArr['mime']          = $contentType;
 		$myArr['attachment_id'] = $attachment_id;
-		$myArr['item_id'] 		= $item_id;
-		$myArr['num_tries']		= 0;
-		$myArr['isComplete']	= false;
-		$myArr['isDownloading']	= false;
-		
+		$myArr['item_id']       = $item_id;
+		$myArr['num_tries']     = 0;
+		$myArr['isComplete']    = false;
+		$myArr['isDownloading'] = false;
+
 		// pull the current items in the list, if any
 		$arrTasks = $options['tasks'];
-		
+
 		//if the item already exists in the q, don't add it. Just log and exit.
 		$found = false;
 
@@ -636,9 +610,9 @@ class WpForGlass {
 			if (is_null($arrTasks)){
 				$arrTasks = array();
 			}
-		
+
 			//add to the list
-			array_push($arrTasks, $myArr);		
+			array_push($arrTasks, $myArr);
 			//assign
 			$options['tasks'] = $arrTasks;
 			//save
@@ -654,11 +628,11 @@ class WpForGlass {
 	}
 
 	/**
-	* Delete a timeline item for the current user.
-	*
-	* @param Google_MirrorService $service Authorized Mirror service.
-	* @param string $item_id ID of the Timeline Item to delete.
-	*/
+	 * Delete a timeline item for the current user.
+	 *
+	 * @param Google_MirrorService $service Authorized Mirror service.
+	 * @param string $item_id ID of the Timeline Item to delete.
+	 */
 	function delete_timeline_item($service, $item_id) {
 		try {
 			$service->timeline->delete($item_id);
@@ -671,7 +645,7 @@ class WpForGlass {
 **   User Card Setup and Config
 ******************************************************************/
 
-	function bootstrap_new_user($user_id) 
+	function bootstrap_new_user($user_id)
 	{
 		$client = $this->get_google_api_client();
 		$client->setAccessToken($this->get_credentials($user_id));
@@ -701,8 +675,8 @@ class WpForGlass {
 			$options = get_site_option( 'wpforglass' );
 		} else {
 			$options = get_option( 'wpforglass' );
-		}		
-		
+		}
+
 		$options['user_id'] = $user_id;
 		$options['credentials'] = $credentials;
 
@@ -712,7 +686,6 @@ class WpForGlass {
 			$result = update_option('wpforglass', $options);
 		}
 	}
-
 
 	function get_userid(){
 		return $this->getOption('user_id');
@@ -724,11 +697,9 @@ class WpForGlass {
 		return $this->getOption('credentials');
 	}
 
-
 /******************************************************************
 **  Helper functions
 *******************************************************************
-
 
 	/**
 	 * @return mixed
@@ -739,13 +710,12 @@ class WpForGlass {
 			$options = get_site_option( 'wpforglass' );
 		} else {
 			$options = get_option( 'wpforglass' );
-		}		
-		
+		}
+
 		if( isset($options[$name]) )
 			return $options[$name];
 		return $default;
 	}
-
 
 	function getQueaueOptions(){
 
@@ -753,36 +723,33 @@ class WpForGlass {
 			$options = get_site_option( 'wfg-cron' );
 		} else {
 			$options = get_option( 'wfg-cron' );
-		}		
+		}
 		
 		return $options;
 
 	}
 
-
-
-
 /*
-	function setOption( $name, $value ) 
+	function setOption( $name, $value )
 	{
-		
+
 		$options = $this->getOption('wpforglass');
 		$options[$name] = $value;
-		
+
 		if (is_multisite()){
 			 $result = update_site_option('wpforglass', $options);
 		} else {
 			 $result = update_option('wpforglass', $options);
 		}
-		
-        return $result;
+
+		return $result;
 	}
 */
 
-    function isConfigured() 
+	function isConfigured()
 	{
 		return $this->getApiClientId() && $this->getApiClientSecret() && $this->getApiSimpleKey();
-    }
+	}
 
 	function hasAuthenticated()
 	{
@@ -793,34 +760,27 @@ class WpForGlass {
 		}
 	}
 
-
 	//MIRROR API STUFF
-
 
 	function getContactName()
 	{
 		return $this->getOption('contact_card_name');
 	}
 
-
 	function getApiClientId()
 	{
 		return $this->getOption('api_client_id');
 	}
-
 
 	function getApiClientSecret()
 	{
 		return $this->getOption('api_client_secret');
 	}
 
-
 	function getApiSimpleKey()
 	{
 		return $this->getOption('api_simple_key');
 	}
-
-
 
 	//POST DEFAULTS
 
@@ -828,11 +788,10 @@ class WpForGlass {
 	{
 		return $this->getOption('default_post_category', WPFORGLASS_DEFAULT_POST_CATEGORY);
 	}
-	
+
 	function getDefaultImageSize()
 	{
 		return $this->getOption('default_image_size', WPFORGLASS_DEFAULT_IMAGE_SIZE);
-		
 	}
 
 	function getDefaultPostStatus()
@@ -845,7 +804,6 @@ class WpForGlass {
 	{
 		return $this->getOption('default_post_title_prefix', WPFORGLASS_DEFAULT_TITLE_PREFIX);
 	}
-
 
 	function removeOptions()
 	{
@@ -864,27 +822,21 @@ class WpForGlass {
 		}
 	}
 
-
 	function getExtension ($mime_type)
 	{
-	    $extensions = array('image/jpeg' => 'jpg', 'image/png'	=> 'png', 'image/gif' => 'gif', 'video/mp4' => 'mp4');
-	    return $extensions[$mime_type];
+		$extensions = array('image/jpeg' => 'jpg', 'image/png'	=> 'png', 'image/gif' => 'gif', 'video/mp4' => 'mp4');
+		return $extensions[$mime_type];
 	}
 
-
 	/**
-	* Logs an error to the error log if DEBUG is true
-	*/
-	
+	 * Logs an error to the error log if DEBUG is true
+	 */
 	function logError($s){
 		if (DEBUG == true){
 			error_log ("[wpForGlass] > ".$s);
 		}
-	
-		
 	}
 
-	
 	function deactivate()
 	{
 		//remove the custom sharing card from glass
@@ -898,147 +850,136 @@ class WpForGlass {
 		} catch (Exception $e){
 			$this->logError($e->getCode().$e->getMessage);
 		}
-	
+
 		//deregistration of the options we've set
 		$this->removeOptions();
 	}
 
-
-
-function showDefaultPostInstructions()
-{
-	?>
-	<div class="inside">
-		You'll want to set a couple options below to define how image and video posts from glass will show up on your blog by default.
-	</div>
-	<?php
-}
-
-function askDefaultPostCats()
-{
-	
-	$current_default_category = $this->getDefaultPostCategory();
-	?>
-	<div class="inside">		
-		<select id="default_post_category" name="wpforglass[default_post_category]"> 
-		<option value="0"><?php echo esc_attr(__('No Default Category')); ?></option> 
-		<?php 
-			
-			$args = array('hide_empty'=>0);
-			$categories = get_categories($args); 
-			foreach ($categories as $category) {
-				$selected = "";
-				if ($current_default_category == $category->term_id){
-					$selected = "selected";
-				}
-				$option = '<option value="'.$category->term_id.'" '.$selected.'>';
-				$option .= $category->cat_name;
-				$option .= ' ('.$category->category_count.')';
-				$option .= '</option>';
-				echo $option;
-			}
+	function showDefaultPostInstructions()
+	{
 		?>
-
-	</select>
-	</div>
-<?php
-}
-
-function askDefaultTitle() {
-}
-
-function askDefaultTags()
-{
-	echo '<div class="inside">';
-	$tags = get_the_tags();
-	//do we actually have tags setup?
-	if (!empty($tags)){
-		echo '<select id="default_tag" name="wpForGlass[default_tag]">';
-	    foreach ($tags as $tag)
-	    {
-	        echo '<option value="'.get_tag_link($tag->term_id).'">'.$tag->name.'</option>';
-	    }
-		echo "</select>";
-	} else {
-		// we don't have tags at all
-		echo "Look's like you don't have any tags setup in your Wordpress Install, set some up and then come back to this page!";
+		<div class="inside">
+			You'll want to set a couple options below to define how image and video posts from glass will show up on your blog by default.
+		</div>
+		<?php
 	}
-	echo '</div>';
-}
 
-function askDefaultPostStatus()
-{
-	$statuses = array('publish', 'pending', 'draft', 'private');
-	$current_default_status = $this->getDefaultPostStatus();
-	echo '<div class="inside"><select id="default_post_status" name="wpforglass[default_post_status]">';	
-	echo '<option value="draft">No Option Selected (draft)</option>';
-	foreach ($statuses as $status){
-		$selected = "";
-		if ($current_default_status == $status){
-			$selected = "selected";
-		}
-		echo '<option value="'.$status.'" '.$selected.'>'.ucfirst($status).'</option>';
-	}
-	echo '</select></div>';
-}
-
-function askDefaultImageSizes(){
-	// find all sizes
-	$all_sizes = get_intermediate_image_sizes();
-	// define default sizes
-	$sizes = array();
-	$sizes = array_merge($sizes, array(
-		'thumbnail'	=>	__("Thumbnail",'wpforglass'),
-		'medium'	=>	__("Medium",'wpforglass'),
-		'large'		=>	__("Large",'wpforglass'),
-		'full'		=>	__("Full",'wpforglass')
-	));
-	// add extra registered sizes
-	foreach( $all_sizes as $size ){
-		if( !isset($sizes[ $size ]) ){
-			$sizes[$size] = ucwords( str_replace('-', ' ', $size) );
-		}
-	}
-	
-	$current_default_image_size = $this->getDefaultImageSize();
-	
-	echo '<div class="inside"><select id="default_image_size" name="wpforglass[default_image_size]">';
-		echo '<option value="full">No image size selected (full)</option>';
-		while ($size_name = current($sizes)) {
-				$selected = "";
-				if ($current_default_image_size == key($sizes)){
-					$selected = "selected";
+	function askDefaultPostCats()
+	{
+		
+		$current_default_category = $this->getDefaultPostCategory();
+		?>
+		<div class="inside">
+			<select id="default_post_category" name="wpforglass[default_post_category]">
+			<option value="0"><?php echo esc_attr(__('No Default Category')); ?></option>
+			<?php
+				
+				$args = array('hide_empty'=>0);
+				$categories = get_categories($args);
+				foreach ($categories as $category) {
+					$selected = "";
+					if ($current_default_category == $category->term_id){
+						$selected = "selected";
+					}
+					$option = '<option value="'.$category->term_id.'" '.$selected.'>';
+					$option .= $category->cat_name;
+					$option .= ' ('.$category->category_count.')';
+					$option .= '</option>';
+					echo $option;
 				}
-			
-			echo '<option value="'.key($sizes).'" '.$selected.'>'.$size_name.'</option>';
-    		next ($sizes);
-		}
-	echo '</select></div>';
-}
-
-/**
- * Adds link to settings page in list of plugins
- */
-static function showPluginActionLinks($actions, $plugin_file) 
-{		
-	static $plugin;
+			?>
 	
-	if (!isset($plugin))
-		$plugin = 'wpForGlass/wpForGlass.php';
-	if ($plugin == $plugin_file) {
-		$settings = array('settings' => '<a href="options-general.php?page=wpforglass">' . __('Settings', 'wpforglass') . '</a>');
-		$actions = array_merge($settings, $actions);
+		</select>
+		</div>
+	<?php
 	}
-	return $actions;
-}
 
+	function askDefaultTitle() {
+	}
 
+	function askDefaultTags()
+	{
+		echo '<div class="inside">';
+		$tags = get_the_tags();
+		//do we actually have tags setup?
+		if (!empty($tags)){
+			echo '<select id="default_tag" name="wpForGlass[default_tag]">';
+			foreach ($tags as $tag)
+			{
+				echo '<option value="'.get_tag_link($tag->term_id).'">'.$tag->name.'</option>';
+			}
+			echo "</select>";
+		} else {
+			// we don't have tags at all
+			echo "Look's like you don't have any tags setup in your Wordpress Install, set some up and then come back to this page!";
+		}
+		echo '</div>';
+	}
 
+	function askDefaultPostStatus()
+	{
+		$statuses = array('publish', 'pending', 'draft', 'private');
+		$current_default_status = $this->getDefaultPostStatus();
+		echo '<div class="inside"><select id="default_post_status" name="wpforglass[default_post_status]">';
+		echo '<option value="draft">No Option Selected (draft)</option>';
+		foreach ($statuses as $status){
+			$selected = "";
+			if ($current_default_status == $status){
+				$selected = "selected";
+			}
+			echo '<option value="'.$status.'" '.$selected.'>'.ucfirst($status).'</option>';
+		}
+		echo '</select></div>';
+	}
 
+	function askDefaultImageSizes(){
+		// find all sizes
+		$all_sizes = get_intermediate_image_sizes();
+		// define default sizes
+		$sizes = array();
+		$sizes = array_merge($sizes, array(
+			'thumbnail'	=>	__("Thumbnail",'wpforglass'),
+			'medium'	=>	__("Medium",'wpforglass'),
+			'large'		=>	__("Large",'wpforglass'),
+			'full'		=>	__("Full",'wpforglass')
+		));
+		// add extra registered sizes
+		foreach( $all_sizes as $size ){
+			if( !isset($sizes[ $size ]) ){
+				$sizes[$size] = ucwords( str_replace('-', ' ', $size) );
+			}
+		}
 
+		$current_default_image_size = $this->getDefaultImageSize();
 
-	
-	
-	
-	
+		echo '<div class="inside"><select id="default_image_size" name="wpforglass[default_image_size]">';
+			echo '<option value="full">No image size selected (full)</option>';
+			while ($size_name = current($sizes)) {
+					$selected = "";
+					if ($current_default_image_size == key($sizes)){
+						$selected = "selected";
+					}
+
+				echo '<option value="'.key($sizes).'" '.$selected.'>'.$size_name.'</option>';
+				next ($sizes);
+			}
+		echo '</select></div>';
+	}
+
+	/**
+	 * Adds link to settings page in list of plugins
+	 */
+	static function showPluginActionLinks($actions, $plugin_file)
+	{
+		static $plugin;
+
+		if (!isset($plugin))
+			$plugin = 'wpForGlass/wpForGlass.php';
+		if ($plugin == $plugin_file) {
+			$settings = array('settings' => '<a href="options-general.php?page=wpforglass">' . __('Settings', 'wpforglass') . '</a>');
+			$actions = array_merge($settings, $actions);
+		}
+		return $actions;
+	}
+
 }
