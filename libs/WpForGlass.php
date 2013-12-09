@@ -829,10 +829,10 @@ class WpForGlass {
 	}
 
 	/**
-	 * Logs an error to the error log if DEBUG is true
+	 * Logs an error to the error log if self::DEBUG is true
 	 */
 	function logError($s){
-		if (DEBUG == true){
+		if ( self::DEBUG == true ){
 			error_log ("[wpForGlass] > ".$s);
 		}
 	}
