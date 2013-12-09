@@ -918,16 +918,21 @@ class WpForGlass {
 
 	function askDefaultPostStatus()
 	{
-		$statuses = array('publish', 'pending', 'draft', 'private');
+		$statuses = array(
+			'publish' => __( 'Publish', 'wpforglass' ),
+			'pending' => __( 'Pending', 'wpforglass' ),
+			'draft'   => __( 'Draft', 'wpforglass' ),
+			'private' => __( 'Private', 'wpforglass' ),
+		);
 		$current_default_status = $this->getDefaultPostStatus();
 		echo '<div class="inside"><select id="default_post_status" name="wpforglass[default_post_status]">';
-		echo '<option value="draft">No Option Selected (draft)</option>';
-		foreach ($statuses as $status){
+		echo '<option value="draft">' . esc_html__( 'No Option Selected (draft)', 'wpforglass' ) . '</option>';
+		foreach ( $statuses as $status => $label ){
 			$selected = "";
 			if ($current_default_status == $status){
 				$selected = "selected";
 			}
-			echo '<option value="'.$status.'" '.$selected.'>'.ucfirst($status).'</option>';
+			echo '<option value="'. esc_attr( $status ) .'" '.$selected.'>'. esc_html( $label ) . '</option>';
 		}
 		echo '</select></div>';
 	}
