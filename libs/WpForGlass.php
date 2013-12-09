@@ -825,7 +825,7 @@ class WpForGlass {
 	function getExtension ($mime_type)
 	{
 		$extensions = array('image/jpeg' => 'jpg', 'image/png'	=> 'png', 'image/gif' => 'gif', 'video/mp4' => 'mp4');
-		return $extensions[$mime_type];
+		return isset( $extensions[ $mime_type ] ) ? $extensions[ $mime_type ] : sanitize_file_name( $mime_type );
 	}
 
 	/**
