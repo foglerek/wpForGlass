@@ -136,9 +136,9 @@ class WpForGlass {
 					</div>
 					<input type="hidden" name="update_made" value="1">
 					<?php if ( $this->hasAuthenticated() && $this->isConfigured() ) : ?>
-						<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e( 'Save Changes' ); ?>" /></p>
+						<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e( 'Save Changes', 'wpforglass' ); ?>" /></p>
 					<?php else : ?>
-						<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e( 'Verify Your API Settings with Google &raquo;' ) ?>" /></p>
+						<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e( 'Verify Your API Settings with Google &raquo;', 'wpforglass' ) ?>" /></p>
 					<?php endif; ?>
 				</form>
 			</div>
