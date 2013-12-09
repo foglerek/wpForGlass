@@ -152,14 +152,14 @@ class WpForGlass {
 
 		?>
 		<div class="inside">
-			So, you got Glass and want to hook it up to your Wordpress Blog. To do so is not terribly complicated, but takes a couple extra steps.<br /><br />
-			<b>Note:</b> You need to have SSL enabled with a certificate that is signed by a trusted signing authority setup for your server.<br />
+			<?php _e( 'So, you got Glass and want to hook it up to your Wordpress Blog. To do so is not terribly complicated, but takes a couple extra steps.', 'wpforglass' ); ?><br /><br />
+			<?php _e( '<b>Note:</b> You need to have SSL enabled with a certificate that is signed by a trusted signing authority setup for your server.', 'wpforglass' ); ?><br />
 			<br />
-			<b>Instructions:</b> go to (<a href="http://labs.webershandwick.com/wpForGlass/installation" target="_blank">http://labs.webershandwick.com/wpForGlass/installation</a>)
+			<?php printf( __( '<b>Instructions:</b> go to (<a href="%1$s" target="_blank">%1$s</a>)', 'wpforglass' ), 'http://labs.webershandwick.com/wpForGlass/installation' ); ?>
 			<br /><br />
-			<b>Your Authorized Redirect URI's for the Google API Console are:</b><br />
+			<b><?php _e( "Your Authorized Redirect URI's for the Google API Console are:", 'wpforglass' ); ?></b><br />
 			<div class="url_container">
-				<code><?php echo $http_auth_URL;?><br /><?php echo $https_auth_URL;?></code>
+				<code><?php echo $http_auth_URL; ?><br /><?php echo $https_auth_URL; ?></code>
 			</div>
 		</div>
 
@@ -218,7 +218,7 @@ class WpForGlass {
 	function showCronInstructions() {
 		?>
 		<div class="inside">
-			wpForGlass uses the CRON to download and post media that you share through Glass that may not have been immediately ready to consume. This is often the case for video files. In order to properly setup wpForGlass, you'll need access to the CRON on your server.
+			<?php _e( "wpForGlass uses the CRON to download and post media that you share through Glass that may not have been immediately ready to consume. This is often the case for video files. In order to properly setup wpForGlass, you'll need access to the CRON on your server.", 'wpforglass' ); ?>
 		</div>
 		<?php
 	}
@@ -226,9 +226,9 @@ class WpForGlass {
 	function showCronTabSettings() {
 		$curlCommand = "*/5 * * * * curl ".WPFORGLASS_CRON_PATH.' >/dev/null 2>&1';
 
-		echo '<div class="inside"><b>Using cURL:</b><br />';
+		echo '<div class="inside"><b>' . __( 'Using cURL:', 'wpforglass' ) . '</b><br />';
 		echo '<textarea cols="55" rows="4" readonly>'.$curlCommand.'</textarea>';
-		echo '<br/><span class="setting-description"><small><em>This is the value that you should place in your crontab, either manually, or through your hosting control panel.</em></small></span></div>';
+		echo '<br/><span class="setting-description"><small><em>' . __( 'This is the value that you should place in your crontab, either manually, or through your hosting control panel.', 'wpforglass' ) . '</em></small></span></div>';
 	}
 
 	//@TODO: add in form validation
@@ -264,7 +264,7 @@ class WpForGlass {
 						$result = update_option('wpforglass', $options);
 					}
 
-					echo '<div class="updated">oAuth setup was successful. Now you can set your post defaults below, and setup the cron.</div>';
+					echo '<div class="updated">' . __( 'oAuth setup was successful. Now you can set your post defaults below, and setup the cron.', 'wpforglass' ) . '</div>';
 					$this->logError('OAUTH was successful');
 				break;
 				//had to reconnect, do nothing
