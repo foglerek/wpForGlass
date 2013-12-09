@@ -1,8 +1,8 @@
 <?php
 
-require_once 'google-api-php-client/src/Google_Client.php';
-require_once 'google-api-php-client/src/contrib/Google_Oauth2Service.php';
-require_once 'google-api-php-client/src/contrib/Google_MirrorService.php';
+require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/Google_Client.php' );
+require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_Oauth2Service.php' );
+require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_MirrorService.php' );
 
 class WFGShareableContact extends Google_Contact {
 	
