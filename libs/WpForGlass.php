@@ -871,7 +871,7 @@ class WpForGlass {
 		?>
 		<div class="inside">
 			<select id="default_post_category" name="wpforglass[default_post_category]">
-			<option value="0"><?php echo esc_attr(__('No Default Category')); ?></option>
+			<option value="0"><?php esc_html_e( 'No Default Category', 'wpforglass' ); ?></option>
 			<?php
 				
 				$args = array('hide_empty'=>0);
@@ -881,9 +881,9 @@ class WpForGlass {
 					if ($current_default_category == $category->term_id){
 						$selected = "selected";
 					}
-					$option = '<option value="'.$category->term_id.'" '.$selected.'>';
-					$option .= $category->cat_name;
-					$option .= ' ('.$category->category_count.')';
+					$option = '<option value="' . esc_attr( $category->term_id ) . '" ' . $selected . '>';
+					$option .= esc_html( $category->cat_name );
+					$option .= ' (' . intval( $category->category_count ) . ')';
 					$option .= '</option>';
 					echo $option;
 				}
