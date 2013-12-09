@@ -170,7 +170,7 @@ class WpForGlass {
 		echo '<div class="inside">';
 		$api_client_id = $this->getApiClientId();
 		?>
-		<input id='api_client_id' name='wpforglass[api_client_id]' size='45' type='text' value="<?php esc_attr_e( $api_client_id ); ?>" />
+		<input id='api_client_id' name='wpforglass[api_client_id]' size='45' type='text' value="<?php echo esc_attr( $api_client_id ); ?>" />
 		<?php
 		echo '</div>';
 	}
@@ -179,10 +179,10 @@ class WpForGlass {
 		echo '<div class="inside">';
 		$api_client_secret = $this->getApiClientSecret();
 		if ( empty( $api_client_secret ) || ! $this->hasAuthenticated() ) : ?>
-			<input id='api_client_secret' name='wpforglass[api_client_secret]' size='45' type='text' value="<?php esc_attr_e( $api_client_secret ); ?>" />
+			<input id='api_client_secret' name='wpforglass[api_client_secret]' size='45' type='text' value="<?php echo esc_attr( $api_client_secret ); ?>" />
 			<br/><span class="setting-description"><small><em><?php _e( 'After successfully authenticating with the Mirror API, the data in this field will not be visible.', 'wpforglass' ); ?></em></small></span>
 		<?php else : ?>
-			<input id='api_client_secret' name='wpforglass[api_client_secret]' size='45' type='password' value="<?php esc_attr_e( $api_client_secret ); ?>" readonly />
+			<input id='api_client_secret' name='wpforglass[api_client_secret]' size='45' type='password' value="<?php echo esc_attr( $api_client_secret ); ?>" readonly />
 			<br/><span class="setting-description"><small><em><?php _e( 'If you have reset your client secret and need to change it. You will have to de-activate the plugin, and re-activate it.', 'wpforglass' ); ?></em></small></span>
 		<?php endif;
 		echo '</div>';
@@ -192,7 +192,7 @@ class WpForGlass {
 		echo '<div class="inside">';
 		$api_simple_key = $this->getApiSimpleKey();
 		?>
-		<input id='api_simple_key' name='wpforglass[api_simple_key]' size='45' type='text' value="<?php esc_attr_e( $api_simple_key ); ?>" />
+		<input id='api_simple_key' name='wpforglass[api_simple_key]' size='45' type='text' value="<?php echo esc_attr( $api_simple_key ); ?>" />
 		<?php
 		echo '</div>';
 	}
@@ -203,13 +203,13 @@ class WpForGlass {
 		
 		if (empty($contact_card_name)){
 		?>
-			<input id='contact_card_name' name='wpforglass[contact_card_name]' size='20' type='text' maxlength="20" value="<?php esc_attr_e( $contact_card_name ); ?>" />
 			<br/><span class="setting-description"><small><em><?php _e('This is the name for the Google Glass Contact Card that you will share images to. Once you have set it, you will not be able to change it unless you de-activate the plugin.', 'wpforglass'); ?></em></small></span>
+			<input id='contact_card_name' name='wpforglass[contact_card_name]' size='20' type='text' maxlength="20" value="<?php echo esc_attr( $contact_card_name ); ?>" />
 
 		<?php
 		} else {
 		?>
-			<input id='contact_card_name' name='wpforglass[contact_card_name]' size='20' type='text' maxlength="20" value="<?php esc_attr_e( $contact_card_name );?>" readonly />
+			<input id='contact_card_name' name='wpforglass[contact_card_name]' size='20' type='text' maxlength="20" value="<?php echo esc_attr( $contact_card_name );?>" readonly />
 		<?php
 		}
 		echo '</div>';
