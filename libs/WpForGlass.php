@@ -859,7 +859,7 @@ class WpForGlass {
 	{
 		?>
 		<div class="inside">
-			You'll want to set a couple options below to define how image and video posts from glass will show up on your blog by default.
+			<?php esc_html_e( 'You&#8217;ll want to set a couple options below to define how image and video posts from glass will show up on your blog by default.', 'wpforglass' ); ?>
 		</div>
 		<?php
 	}
