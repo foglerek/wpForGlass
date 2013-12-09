@@ -203,8 +203,8 @@ class WpForGlass {
 		
 		if (empty($contact_card_name)){
 		?>
-			<br/><span class="setting-description"><small><em><?php _e('This is the name for the Google Glass Contact Card that you will share images to. Once you have set it, you will not be able to change it unless you de-activate the plugin.', 'wpforglass'); ?></em></small></span>
 			<input id='contact_card_name' name='wpforglass[contact_card_name]' size='20' type='text' maxlength="20" value="<?php echo esc_attr( $contact_card_name ); ?>" />
+			<br/><span class="setting-description"><small><em><?php _e( 'This is the name for the Google Glass Contact Card that you will share images to. Once you have set it, you will not be able to change it unless you de-activate the plugin.', 'wpforglass' ); ?></em></small></span>
 
 		<?php
 		} else {
