@@ -1,8 +1,14 @@
 <?php
 
-require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/Google_Client.php' );
-require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_Oauth2Service.php' );
-require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_MirrorService.php' );
+/** this is a non-standard fix and will require proper checks inside the Google_Client libraries **/
+if ( !class_exists( 'Google_Client' ) )
+	require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/Google_Client.php' );
+
+if (!class_exists('Google_Oauth2Service' ) )
+	require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_Oauth2Service.php' );
+
+if (!class_exists('Google_MirrorService' ) )
+	require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_MirrorService.php' );
 
 class WFGShareableContact extends Google_Contact {
 
