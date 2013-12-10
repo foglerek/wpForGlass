@@ -152,7 +152,7 @@ class WpForGlass {
 
 		?>
 		<div class="inside">
-			<?php _e( 'So, you got Glass and want to hook it up to your Wordpress Blog. To do so is not terribly complicated, but takes a couple extra steps.', 'wpforglass' ); ?><br /><br />
+			<?php _e( 'So, you got Glass and want to hook it up to your WordPress Blog. To do so is not terribly complicated, but takes a couple extra steps.', 'wpforglass' ); ?><br /><br />
 			<?php _e( '<b>Note:</b> You need to have SSL enabled with a certificate that is signed by a trusted signing authority setup for your server.', 'wpforglass' ); ?><br />
 			<br />
 			<?php printf( __( '<b>Instructions:</b> go to (<a href="%1$s" target="_blank">%1$s</a>)', 'wpforglass' ), 'http://labs.webershandwick.com/wpForGlass/installation' ); ?>
@@ -511,7 +511,7 @@ class WpForGlass {
 		$this->logError( "contentUrl: " . $contentUrl );
 		$this->logError( "----------------------" );
 
-		// currently there are only two use-cases for an attachment as far as wordpress is concerned, video or images
+		// currently there are only two use-cases for an attachment as far as WordPress is concerned, video or images
 		// videos tend to take extra time to process and will most often have the isprocessing flag set to true
 		// furthermore, videos currently return an http 302 status redirect
 		// the best practice is to first check if an attachment is currently processing regardless of content-type
@@ -871,7 +871,7 @@ class WpForGlass {
 			echo "</select>";
 		} else {
 			// we don't have tags at all
-			esc_html_e( "Look's like you don't have any tags setup in your Wordpress Install, set some up and then come back to this page!", 'wpforglass' );
+			esc_html_e( "Look's like you don't have any tags setup in your WordPress Install, set some up and then come back to this page!", 'wpforglass' );
 		}
 		echo '</div>';
 	}

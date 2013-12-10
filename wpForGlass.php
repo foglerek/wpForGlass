@@ -2,7 +2,7 @@
 /*
 Plugin Name: wpForGlass
 Plugin URI: http://labs.webershandwick.com/wpForGlass/
-Description: Allows Google Glass explorers to share photos and videos from Glass straight to their wordpress blog through the Mirror API
+Description: Allows Google Glass explorers to share photos and videos from Glass straight to their WordPress blog through the Mirror API
 Version: 1.0.0
 Author: Weber Shandwick Labs
 Author URI: http://labs.webershandwick.com/
