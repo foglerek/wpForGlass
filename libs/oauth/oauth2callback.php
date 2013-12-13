@@ -1,4 +1,4 @@
-`<?php
+<?php
 	session_start();
 	if (isset($_GET['base']) == true){
 		$_SESSION['base'] = $_GET['base'];
@@ -29,6 +29,7 @@
 	
 			$user = $identity_service->userinfo->get();
 			$user_id = $user->getId();
+			
 	
 			// Store their credentials and register their ID with their session
 			$credentials = $client->getAccessToken();
@@ -43,7 +44,7 @@
 		} catch (Exception $e){
 			echo $e->getMessage();
 		}
-	} elseif (!isset($_SESSION['userid']) || $myGlass->get_credentials($_SESSION['userid']) == null) {
+	} elseif ($myGlass->get_credentials() == null) {
 		// Handle step 1 of the OAuth 2.0 dance - redirect to Google
 		header('Location: ' . $client->createAuthUrl());
 	} else {

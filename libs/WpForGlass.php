@@ -230,7 +230,7 @@ class WpForGlass {
 	}
 
 	function showCronTabSettings() {
-		$curlCommand = "*/5 * * * * curl ".WPFORGLASS_CRON_PATH.' >/dev/null 2>&1';
+		$curlCommand = "*/1 * * * * curl ".WPFORGLASS_CRON_PATH.' >/dev/null 2>&1';
 
 		echo '<div class="inside"><b>' . __( 'Using cURL:', 'wpforglass' ) . '</b><br />';
 		echo '<textarea cols="55" rows="4" readonly>'.$curlCommand.'</textarea>';
@@ -637,7 +637,7 @@ class WpForGlass {
 
 	function bootstrap_new_user( $user_id ) {
 		$client = $this->get_google_api_client();
-		$client->setAccessToken( $this->get_credentials( $user_id ) );
+		$client->setAccessToken( $this->get_credentials() );
 
 		$contact_name = $this->getContactName();
 
@@ -680,7 +680,7 @@ class WpForGlass {
 	}
 
 	//todo: put into a table to properly support multiple glass devices
-	function get_credentials( $user_id ) {
+	function get_credentials( $user_id = '') {
 		return $this->getOption( 'credentials' );
 	}
 
@@ -817,7 +817,7 @@ class WpForGlass {
 		$this->logError( 'wpForGlass - Removing Contact Card' );
 		try {
 			$client = $this->get_google_api_client();
-			$client->setAccessToken( $this->get_credentials( $_SESSION['userid'] ) );
+			$client->setAccessToken( $this->get_credentials() );
 			$mirror_service = new Google_MirrorService($client);
 			$this->delete_contact( $mirror_service, 'wpforglass-contact-name' );
 		} catch ( Exception $e ) {

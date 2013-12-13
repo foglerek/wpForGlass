@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Author: Jenny Murphy - http://google.com/+JennyMurphy
+
+// Based on original work by: Jenny Murphy - http://google.com/+JennyMurphy
 
 // Only process POST requests
 if ($_SERVER['REQUEST_METHOD'] != "POST") {
@@ -85,11 +86,11 @@ switch ($request['collection']) {
 			if ($user_action['type'] == 'SHARE') {
 				$timeline_item_id = $request['itemId'];
 				$timeline_item = $mirror_service->timeline->get($timeline_item_id);
-				error_log('incoming share');
-				$myGlass->logError('Incoming Google Glass Attachment');
-				$timeline_caption = $timeline_item->getText();
 				
 				if ($timeline_item->getAttachments() != null) {
+					$myGlass->logError('Incoming Google Glass Attachment');
+					$timeline_caption = $timeline_item->getText();
+
 					$attachments = $timeline_item->getAttachments();
 					foreach ($attachments as $attachment){
 						$myId = $timeline_item_id;
@@ -184,7 +185,6 @@ switch ($request['collection']) {
 								$videoWidth = $default_size['width'];
 								$videoAttachmentSrc = wp_get_attachment_url($attach_id);
 							
-							
 								$output = '[video width="1280" height="720" mp4="'.$videoAttachmentSrc.'"][/video]';
 								$updatedPostContent = $output.'<br /><div class="glasscaption">'.$glassCaption."</div>";
 							
@@ -224,7 +224,7 @@ switch ($request['collection']) {
 
 				//let the user know its been received and posted with a patch-update to their timeline
 				$patch = new Google_TimelineItem();
-				$patch->setText("Upload Complete! ".$timeline_item->getText());
+				$patch->setText("Upload Complete!");
 				$mirror_service->timeline->patch($timeline_item_id, $patch);
 
 				$myGlass->logError('Finished receiving data');
