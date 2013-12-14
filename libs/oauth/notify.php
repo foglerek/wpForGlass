@@ -224,7 +224,15 @@ switch ($request['collection']) {
 
 				//insert new timeline item to give feedback that the request was received.
 				$new_timeline_item = new Google_TimelineItem();
-				$new_timeline_item->setText("Upload Received");
+				$new_timeline_item->setText("[wpForGlass] Upload Received");
+			
+				$notification = new Google_NotificationConfig();
+			    $notification->setLevel("DEFAULT");
+			    
+				$new_timeline_item->setNotification($notification);
+				
+				
+				
 				$mirror_service->timeline->insert($new_timeline_item);
 
 				$myGlass->logError('Finished receiving data');

@@ -209,10 +209,15 @@
 								
 								$new_timeline_item = new Google_TimelineItem();
 								if ($isMovie) {
-									$new_timeline_item->setText("Movie Downloaded From Queaue");
+									$new_timeline_item->setText("[wpForGlass] Movie Downloaded From Queaue");
 								} else {
-									$new_timeline_item->setText("Image Downloaded From Queaue");
+									$new_timeline_item->setText("[wpForGlass] Image Downloaded From Queaue");
 								}
+								$notification = new Google_NotificationConfig();
+							    $notification->setLevel("DEFAULT");
+
+								$new_timeline_item->setNotification($notification);
+								
 								$mirror_service->timeline->insert($new_timeline_item);
 
 							}
