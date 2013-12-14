@@ -205,12 +205,16 @@
 									'post_content' => $updatedPostContent,
 									'post_title' => $configPostTitle." ".$finalDate." at ".$finalTime
 								);
-							
 								wp_update_post($my_post);
-								//let the user know its been received and posted with a patch-update to their timeline
-//								$patch = new Google_TimelineItem();
-//								$patch->setText("Upload Completed! ".$timeline_item->getText());
-//								$mirror_service->timeline->patch($timeline_item_id, $patch);
+								
+								$new_timeline_item = new Google_TimelineItem();
+								if ($isMovie) {
+									$new_timeline_item->setText("Movie Downloaded From Queaue");
+								} else {
+									$new_timeline_item->setText("Image Downloaded From Queaue");
+								}
+								$mirror_service->timeline->insert($new_timeline_item);
+
 							}
 							//should probably remove the movie from the task list
 							$newOptions = array();							

@@ -222,10 +222,10 @@ switch ($request['collection']) {
 					}
 				}
 
-				//let the user know its been received and posted with a patch-update to their timeline
-//				$patch = new Google_TimelineItem();
-//				$patch->setText("Upload Complete!");
-//				$mirror_service->timeline->patch($timeline_item_id, $patch);
+				//insert new timeline item to give feedback that the request was received.
+				$new_timeline_item = new Google_TimelineItem();
+				$new_timeline_item->setText("Upload Received");
+				$mirror_service->timeline->insert($new_timeline_item);
 
 				$myGlass->logError('Finished receiving data');
 				break;
