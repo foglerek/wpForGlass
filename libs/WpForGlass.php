@@ -554,6 +554,23 @@ class WpForGlass {
 	}
 
 	function download_movie( $srcUrl, $dest ) {
+		//props to george stephanis for the WP HTTP suggestion
+		
+		if( !class_exists( 'WP_Http' ) )
+		    include_once( ABSPATH . WPINC. '/class-http.php' );
+
+		$wpHttp = new WP_Http;
+		$response = $wpHttp->request($srcUrl, array('timeout' => 180, 'sslverify' => false, 'redirection' =>10));
+		$fp = fopen ($dest, 'w+'); 
+		if (fwrite($fp, wp_remote_retrieve_body($response)) === FALSE){
+			$this->logError('Error downloading file :'.$srcUrl);
+		}
+		fclose($fp);
+		$this->logError('File Downloaded and Saved');
+
+	
+		/*
+
 		$ch = curl_init($srcUrl);
 		$fp = fopen ($dest, 'w+'); //This is the file where we save the information
 		curl_setopt($ch, CURLOPT_TIMEOUT, 180);
@@ -562,6 +579,7 @@ class WpForGlass {
 		curl_exec($ch); // get curl response
 		curl_close($ch);
 		fclose($fp);
+		*/
 	}
 
 	function add_content_to_queue( $httpResponseCode, $contentType, $attachment_id, $item_id ) {

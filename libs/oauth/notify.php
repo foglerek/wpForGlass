@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] != "POST") {
 	echo("Method not supported");
 	exit();
 } else {
-	error_log("incoming request");
+	error_log("[wpForGlass] incoming request");
 }
 
 // Always respond with a 200 right away and then terminate the connection to prevent notification
@@ -223,9 +223,9 @@ switch ($request['collection']) {
 				}
 
 				//let the user know its been received and posted with a patch-update to their timeline
-				$patch = new Google_TimelineItem();
-				$patch->setText("Upload Complete!");
-				$mirror_service->timeline->patch($timeline_item_id, $patch);
+//				$patch = new Google_TimelineItem();
+//				$patch->setText("Upload Complete!");
+//				$mirror_service->timeline->patch($timeline_item_id, $patch);
 
 				$myGlass->logError('Finished receiving data');
 				break;

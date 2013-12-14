@@ -208,9 +208,9 @@
 							
 								wp_update_post($my_post);
 								//let the user know its been received and posted with a patch-update to their timeline
-								$patch = new Google_TimelineItem();
-								$patch->setText("Upload Completed! ".$timeline_item->getText());
-								$mirror_service->timeline->patch($timeline_item_id, $patch);
+//								$patch = new Google_TimelineItem();
+//								$patch->setText("Upload Completed! ".$timeline_item->getText());
+//								$mirror_service->timeline->patch($timeline_item_id, $patch);
 							}
 							//should probably remove the movie from the task list
 							$newOptions = array();							
