@@ -1,7 +1,9 @@
 <?php
 
 	set_time_limit(0);
-	
+
+
+	//error_log('[wpForGlass wfgcron test]');	
 	
 	//*** INCLUDES
 	# No need for the template engine
@@ -13,12 +15,15 @@
 	
 	require_once($wp_load);
 	require_once(ABSPATH . 'wp-admin/includes/image.php');
+	//error_log('[wpForGlass wfgcron]');
 	
-	require_once '../WpForGlass.php';
+	if (!class_exists('WpForGlass' )){
+		require_once '../WpForGlass.php';
+	}
+	
 	$myGlass = new WpForGlass();
-	
 
-	$myGlass->logError("Running Cron");
+//	$myGlass->logError("Running Cron");
 	
 	// pull what we need from the options table and see if there is anything to even process.
 	$options = $myGlass->getQueaueOptions();
@@ -245,7 +250,7 @@
 		}//foreach
 		
 	} else {
-		$myGlass->logError("There are no files in the queue. Exiting.");
+	//	$myGlass->logError("There are no files in the queue. Exiting.");
 	} //$numTasks is not > 0
 	
 	

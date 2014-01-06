@@ -23,29 +23,34 @@ class WFGShareableContact extends Google_Contact {
 
 class WpForGlass {
 
-	const DEBUG = false;
+	const DEBUG = true;
 
-	var $settings = "",
-	    $error,
+	var $settings = ""; 
+	var $config = array();
+	var $error,
 	    $conflict;
 
 	public function __construct() {
 		$this->settings = "";
 
-		define( 'WPFORGLASS_VERSION', '1.0.0' );
-		define( 'WPFORGLASS_PATH', dirname( __FILE__ ) );
-		define( 'WPFORGLASS_URL', plugin_dir_url( __FILE__ ) );
-		define( 'WPFORGLASS_OAUTH_URL', plugins_url( 'oauth/oauth2callback.php', __FILE__ ) );
-		define( 'WPFORGLASS_CRON_PATH', plugins_url( 'cron/wfgcron.php', __FILE__ ) );
-		define( 'WPFORGLASS_DEFAULT_POST_CATEGORY', '0' );
-		define( 'WPFORGLASS_DEFAULT_IMAGE_SIZE', 'full' );
-		define( 'WPFORGLASS_DEFAULT_POST_STATUS', 'publish' );
-		define( 'WPFORGLASS_DEFAULT_TITLE_PREFIX', '#throughglass' );
-
 		$originalNotifyUrl = plugins_url( 'oauth/notify.php', __FILE__ );
 		$httpsNotifyUrl = preg_replace( "/^http:/", "https:", $originalNotifyUrl );
+		
+		$this->config = array(
+		    'WPFORGLASS_VERSION' => '1.0.0',
+		    'WPFORGLASS_PATH'  => dirname( __FILE__ ),
+		    'WPFORGLASS_URL'  => plugin_dir_url( __FILE__ ),
+		    'WPFORGLASS_OAUTH_URL'  => plugins_url( 'oauth/oauth2callback.php', __FILE__ ),
+		    'WPFORGLASS_CRON_PATH'  => plugins_url( 'cron/wfgcron.php', __FILE__ ),
+		    'WPFORGLASS_DEFAULT_POST_CATEGORY'  => '0',
+		    'WPFORGLASS_DEFAULT_IMAGE_SIZE'  => 'full',
+		    'WPFORGLASS_DEFAULT_POST_STATUS'  => 'publish',
+		    'WPFORGLASS_DEFAULT_TITLE_PREFIX'  => '#throughglass',
+			'WPFORGLASS_NOTIFY_URL' => $httpsNotifyUrl
+		);
+		
 
-		define( 'WPFORGLASS_NOTIFY_URL', $httpsNotifyUrl );
+
 	}
 
 	public function setupWPAdminPage() {
@@ -115,17 +120,17 @@ class WpForGlass {
 				$credentials  = $this->getOption( 'credentials' );
 				$needs_reauth = $this->user_needs_reauth( $credentials );
 
-				$redirect_base = WPFORGLASS_OAUTH_URL;
+				$redirect_base = $this->config[ 'WPFORGLASS_OAUTH_URL' ];
 				$redirect_base .= '?base=' . admin_url() . 'options-general.php?page=wpforglass';
 
 				if ( $needs_reauth === true ) {
 					echo '<div class="error"><b>wpForGlass Error:</b> Looks like you need to <a href="' . $redirect_base . '">re-connect wpForGlass with your Google Account</a><br /></div>';
 				}
 			} catch ( Exception $e ) {
-				$redirect_base = WPFORGLASS_OAUTH_URL;
+				$redirect_base = $this->config[ 'WPFORGLASS_OAUTH_URL' ];
 				$redirect_base .= '?base=' . admin_url() . 'options-general.php?page=wpforglass';
 
-				echo '<div class="error"><b>wpForGlass Error:</b> Looks like you need to <a href="' . $redirect_base . '">re-connect wpForGlass with your Google Account</a><br /><code>' . $e->getMessage() . '</code></div>';
+				echo '<div class="error"><b>wpForGlass Error:</b> Looks like you need to <a href="' . $redirect_base . '">re-connect wpForGlass with your Google Account</a><br /><code>'.$e->getCode() .'::'. $e->getMessage() . '</code></div>';
 			}
 		}
 
@@ -153,8 +158,10 @@ class WpForGlass {
 	} //showOptionsPage
 
 	function showInstructions() {
-		$http_auth_URL  = WPFORGLASS_OAUTH_URL;
-		$https_auth_URL = preg_replace("/^http:/", " https:", WPFORGLASS_OAUTH_URL);
+		$http_auth_URL  = $this->config[ 'WPFORGLASS_OAUTH_URL' ];
+		$this->logError($http_auth_URL);
+		
+		$https_auth_URL = preg_replace("/^http:/", " https:", $this->config[ 'WPFORGLASS_OAUTH_URL']);
 
 		?>
 		<div class="inside">
@@ -230,7 +237,7 @@ class WpForGlass {
 	}
 
 	function showCronTabSettings() {
-		$curlCommand = "*/1 * * * * curl ".WPFORGLASS_CRON_PATH.' >/dev/null 2>&1';
+		$curlCommand = "*/1 * * * * curl ".$this->config[ 'WPFORGLASS_CRON_PATH' ].' >/dev/null 2>&1';
 
 		echo '<div class="inside"><b>' . __( 'Using cURL:', 'wpforglass' ) . '</b><br />';
 		echo '<textarea cols="55" rows="4" readonly>'.$curlCommand.'</textarea>';
@@ -290,7 +297,7 @@ class WpForGlass {
 					$this->storeConsoleData();
 					//go to the oauth page
 					
-					$redirect_base = WPFORGLASS_OAUTH_URL;
+					$redirect_base = $this->config[ 'WPFORGLASS_OAUTH_URL' ];
 					$redirect_base .= '?base='.admin_url()."options-general.php?page=wpforglass";
 					
 					header('Location: '.$redirect_base);
@@ -323,10 +330,12 @@ class WpForGlass {
 		$options['default_image_size']    = $default_image_size  = $wpfg['default_image_size'];
 		$options['default_post_status']   = $default_post_status = $wpfg['default_post_status'];
 
+		/*
 		$this->logError( "Saving API-Client_Id: " . $client_id );
 		$this->logError( "Saving API-Client_Secret: " . $client_secret );
 		$this->logError( "Saving API Simple Key: " . $api_simple_key );
-
+		*/
+		
 		if ( is_multisite() ) {
 			$result = update_site_option( 'wpforglass', $options );
 		} else {
@@ -367,7 +376,7 @@ class WpForGlass {
 		$client->setClientSecret( $api_client_secret );
 		$client->setDeveloperKey( $api_simple_key );
 
-		$client->setRedirectUri( WPFORGLASS_OAUTH_URL );
+		$client->setRedirectUri( $this->config[ 'WPFORGLASS_OAUTH_URL' ] );
 
 		$client->setScopes( array(
 			'https://www.googleapis.com/auth/glass.timeline',
@@ -387,8 +396,7 @@ class WpForGlass {
 			if ( $e->getCode() == 401 ) {
 				// This user may have disabled the Glassware on MyGlass.
 				// Clean up the mess and attempt to re-auth.
-				unset( $_SESSION['userid'] );
-				header( 'Location: ' . WPFORGLASS_OAUTH_URL );
+				header( 'Location: ' . $this->config['WPFORGLASS_OAUTH_URL'] );
 				exit;
 			} else {
 				// Let it go...
@@ -398,17 +406,23 @@ class WpForGlass {
 	}
 
 	function user_needs_reauth( $credentials ) {
-		$this->logError( '`' );
+		$this->logError('checking if user needs reauth');
+
 		$client = $this->get_google_api_client();
 		$client->setAccessToken( $credentials );
 		$token_checker = new Google_Oauth2Service( $client );
 		try {
 			$token_checker->userinfo->get();
+			//error_log('test:');
+			//error_log(print_r($token_checker->userinfo->get(), true));
+			
+			
 		} catch ( Google_ServiceException $e ) {
-			$this->logError( 'user_needs_reauth throwing google_serviceexception >> ' . $e->getMessage() );
+			$this->logError( 'user_needs_reauth throwing google_service_exception >> ' . $e->getMessage() );
 			if ( $e->getCode() == 401 ) {
 				// This user may have disabled the Glassware on MyGlass.
 				// Clean up the mess and attempt to re-auth.
+				
 				return true;
 			} else {
 				// Let it go...
@@ -666,7 +680,7 @@ class WpForGlass {
 
 		$this->insert_timeline_item( $mirror_service, $timeline_item, null, null );
 		$this->insert_contact( $mirror_service, "wpforglass-contact-name", $contact_name, plugins_url( 'img/contact_image.jpg', __FILE__ ) );
-		$this->subscribe_to_notifications( $mirror_service, "timeline", $user_id, WPFORGLASS_NOTIFY_URL );
+		$this->subscribe_to_notifications( $mirror_service, "timeline", $user_id, $this->config['WPFORGLASS_NOTIFY_URL'] );
 	}
 
 /******************************************************************
@@ -776,21 +790,21 @@ class WpForGlass {
 	//POST DEFAULTS
 
 	function getDefaultPostCategory() {
-		return $this->getOption( 'default_post_category', WPFORGLASS_DEFAULT_POST_CATEGORY );
+		return $this->getOption( 'default_post_category', $this->config[ 'WPFORGLASS_DEFAULT_POST_CATEGORY' ] );
 	}
 
 	function getDefaultImageSize() {
-		return $this->getOption( 'default_image_size', WPFORGLASS_DEFAULT_IMAGE_SIZE );
+		return $this->getOption( 'default_image_size', $this->config[ 'WPFORGLASS_DEFAULT_IMAGE_SIZE' ] );
 	}
 
 	function getDefaultPostStatus() {
-		return $this->getOption( 'default_post_status', WPFORGLASS_DEFAULT_POST_STATUS );
+		return $this->getOption( 'default_post_status', $this->config[ 'WPFORGLASS_DEFAULT_POST_STATUS' ] );
 		
 	}
 
 	function getDefaultPostTitlePrefix()
 	{
-		return $this->getOption( 'default_post_title_prefix', WPFORGLASS_DEFAULT_TITLE_PREFIX );
+		return $this->getOption( 'default_post_title_prefix', $this->config[ 'WPFORGLASS_DEFAULT_TITLE_PREFIX' ] );
 	}
 
 	function removeOptions()
