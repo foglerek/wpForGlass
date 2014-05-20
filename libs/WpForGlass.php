@@ -1,16 +1,19 @@
 <?php
 
+// Add google api php client src to include path.
+set_include_path(get_include_path() . PATH_SEPARATOR . plugin_dir_path( __FILE__ ) . 'google-api-php-client/src');
+
 /** this is a non-standard fix and will require proper checks inside the Google_Client libraries **/
 if ( !class_exists( 'Google_Client' ) )
-	require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/Google_Client.php' );
+	require_once( 'Google/Client.php' );
 
-if (!class_exists('Google_Oauth2Service' ) )
-	require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_Oauth2Service.php' );
+if (!class_exists( 'Google_Service_Oauth2' ) )
+	require_once( 'Google/Service/Oauth2.php' );
 
-if (!class_exists('Google_MirrorService' ) )
-	require_once( plugin_dir_path( __FILE__ ) . 'google-api-php-client/src/contrib/Google_MirrorService.php' );
+if (!class_exists( 'Google_Service_Mirror' ) )
+	require_once( 'Google/Service/Mirror.php' );
 
-class WFGShareableContact extends Google_Contact {
+class WFGShareableContact extends Google_Service_Mirror_Contact {
 
 	public $sharingFeatures;
 
@@ -369,12 +372,13 @@ class WpForGlass {
 		*/
 
 		$client = new Google_Client();
-		$client->setUseObjects( true );
 		$client->setApplicationName( 'wpforglass' );
 
 		$client->setClientId( $api_client_id );
 		$client->setClientSecret( $api_client_secret );
-		$client->setDeveloperKey( $api_simple_key );
+		// Setting developer key can lead to unexpected results with oauth 2.0. See below:
+		// http://stackoverflow.com/questions/21020898/403-error-with-messageaccess-not-configured-please-use-google-developers-conso
+		// $client->setDeveloperKey( $api_simple_key );
 
 		$client->setRedirectUri( $this->config[ 'WPFORGLASS_OAUTH_URL' ] );
 
@@ -386,13 +390,30 @@ class WpForGlass {
 		return $client;
 	}
 
+	// Returns authenticated google api client
+	function get_auth_google_api_client() {
+
+		if ( is_multisite() ) {
+			$options = get_site_option( 'wpforglass' );
+		} else {
+			$options = get_option( 'wpforglass' );
+		}
+
+		// Get unauthenticated client
+		$client = $this->get_google_api_client();
+		// Verify and set credentials
+		$this->verify_credentials($options['credentials']);
+
+		return $client;
+	}
+
 	function verify_credentials( $credentials ) {
 		$client = $this->get_google_api_client();
 		$client->setAccessToken( $credentials );
-		$token_checker = new Google_Oauth2Service( $client );
+		$token_checker = new Google_Service_Oauth2( $client );
 		try {
 			$token_checker->userinfo->get();
-		} catch ( Google_ServiceException $e ) {
+		} catch ( Google_Service_Exception $e ) {
 			if ( $e->getCode() == 401 ) {
 				// This user may have disabled the Glassware on MyGlass.
 				// Clean up the mess and attempt to re-auth.
@@ -410,14 +431,14 @@ class WpForGlass {
 
 		$client = $this->get_google_api_client();
 		$client->setAccessToken( $credentials );
-		$token_checker = new Google_Oauth2Service( $client );
+		$token_checker = new Google_Service_Oauth2( $client );
 		try {
 			$token_checker->userinfo->get();
 			//error_log('test:');
 			//error_log(print_r($token_checker->userinfo->get(), true));
 			
 			
-		} catch ( Google_ServiceException $e ) {
+		} catch ( Google_Service_Exception $e ) {
 			$this->logError( 'user_needs_reauth throwing google_service_exception >> ' . $e->getMessage() );
 			if ( $e->getCode() == 401 ) {
 				// This user may have disabled the Glassware on MyGlass.
@@ -450,7 +471,7 @@ class WpForGlass {
 	/**
 	 * Subscribe to notifications for the current user.
 	 *
-	 * @param Google_MirrorService $service Authorized Mirror service.
+	 * @param Google_Service_Mirror $service Authorized Mirror service.
 	 * @param string $collection Collection to subscribe to (supported
 	 *                           values are "timeline" and "locations").
 	 * @param string $user_token Opaque token used by the Service to
@@ -460,7 +481,7 @@ class WpForGlass {
 	 */
 	function subscribe_to_notifications( $service, $collection, $user_token, $callback_url ) {
 		try {
-			$subscription = new Google_Subscription();
+			$subscription = new Google_Service_Mirror_Subscription();
 			$subscription->setCollection( $collection );
 			$subscription->setUserToken( $user_token );
 			$subscription->setCallbackUrl( $callback_url );
@@ -475,15 +496,13 @@ class WpForGlass {
 
 	function insert_contact( $service, $contact_id, $display_name, $icon_url ) {
 		try {
-//			$contact = new Google_Contact();
 			$contact = new WFGShareableContact();
 			
 			$contact->setId( $contact_id );
 			$contact->setDisplayName( $display_name );
 			$contact->setImageUrls( array($icon_url ));
 			$contact->setSharingFeatures( array('ADD_CAPTION' ) );
-			
-			
+		
 			return $service->contacts->insert( $contact );
 		} catch ( Exception $e ) {
 			$this->logError( 'An error occurred while inserting contact card: ' . $e->getMessage() );
@@ -494,7 +513,7 @@ class WpForGlass {
 	/**
 	 * Delete a contact for the current user.
 	 *
-	 * @param Google_MirrorService $service Authorized Mirror service.
+	 * @param Google_Service_Mirror $service Authorized Mirror service.
 	 * @param string $contact_id ID of the Contact to delete.
 	 */
 	function delete_contact( $service, $contact_id ) {
@@ -513,8 +532,13 @@ class WpForGlass {
 	 * @return array
 	 */
 	function download_attachment( $item_id, $attachment ) {
-		$request             = new Google_HttpRequest($attachment->getContentUrl(), 'GET', null, null);
-		$httpRequest         = Google_Client::$io->authenticatedRequest($request);
+		$request             = new Google_Http_Request($attachment->getContentUrl(), 'GET', null, null);
+
+		// Get authenticated client
+  		$client 			 = $this->get_auth_google_api_client();
+
+  		// Make authenticated request
+  		$httpRequest         = $client->getAuth()->authenticatedRequest($request);
 
 		$attachment_id       = $attachment->getId();
 		$isProcessingContent = (int) $attachment->getIsProcessingContent();
@@ -575,7 +599,7 @@ class WpForGlass {
 
 		$wpHttp = new WP_Http;
 		$response = $wpHttp->request($srcUrl, array('timeout' => 180, 'sslverify' => false, 'redirection' =>10));
-		$fp = fopen ($dest, 'w+'); 
+		$fp = fopen ($dest, 'w'); 
 		if (fwrite($fp, wp_remote_retrieve_body($response)) === FALSE){
 			$this->logError('Error downloading file :'.$srcUrl);
 		}
@@ -615,12 +639,15 @@ class WpForGlass {
 		$myArr['isDownloading'] = false;
 
 		// pull the current items in the list, if any
-		$arrTasks = $options['tasks'];
+		$arrTasks = array();
+		if ( !empty( $aOptions['tasks'] ) ) {
+			$arrTasks = $aOptions['tasks'];
+		}
 
 		//if the item already exists in the q, don't add it. Just log and exit.
 		$found = false;
 
-		if ( isset( $arrTasks ) && count( $arrTasks ) > 0 ) {
+		if ( count( $arrTasks ) > 0 ) {
 			foreach( $arrTasks as $task ){
 				if ( $item_id == $task['item_id'] ){
 					$found = true;
@@ -628,10 +655,6 @@ class WpForGlass {
 			}
 		}
 		if ( ! $found ) {
-			
-			if ( is_null( $arrTasks ) ){
-				$arrTasks = array();
-			}
 
 			//add to the list
 			array_push( $arrTasks, $myArr );
@@ -652,7 +675,7 @@ class WpForGlass {
 	/**
 	 * Delete a timeline item for the current user.
 	 *
-	 * @param Google_MirrorService $service Authorized Mirror service.
+	 * @param Google_Service_Mirror $service Authorized Mirror service.
 	 * @param string $item_id ID of the Timeline Item to delete.
 	 */
 	function delete_timeline_item( $service, $item_id ) {
@@ -674,8 +697,8 @@ class WpForGlass {
 		$contact_name = $this->getContactName();
 
 		// A glass service for interacting with the Mirror API
-		$mirror_service = new Google_MirrorService( $client );
-		$timeline_item  = new Google_TimelineItem();
+		$mirror_service = new Google_Service_Mirror( $client );
+		$timeline_item  = new Google_Service_Mirror_TimelineItem();
 		$timeline_item->setText( "wpForGlass is now setup!" );
 
 		$this->insert_timeline_item( $mirror_service, $timeline_item, null, null );
@@ -850,7 +873,7 @@ class WpForGlass {
 		try {
 			$client = $this->get_google_api_client();
 			$client->setAccessToken( $this->get_credentials() );
-			$mirror_service = new Google_MirrorService($client);
+			$mirror_service = new Google_Service_Mirror($client);
 			$this->delete_contact( $mirror_service, 'wpforglass-contact-name' );
 		} catch ( Exception $e ) {
 			$this->logError( $e->getCode() . $e->getMessage );

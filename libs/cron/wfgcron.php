@@ -41,7 +41,7 @@
 		$client->setAccessToken($access_token);
 
 		// A glass service for interacting with the Mirror API
-		$mirror_service = new Google_MirrorService($client);
+		$mirror_service = new Google_Service_Mirror($client);
 				
 		//loop through all attachments that need to be checked to see if they are ready
 		//and if so, download the ones that are available for processing.
@@ -116,7 +116,7 @@
 								//do nothing
 								
 								//let the user know its processing with a patch-update to their timeline
-								$patch = new Google_TimelineItem();
+								$patch = new Google_Service_Mirror_TimelineItem();
 								$patch->setText("Processing Upload.".$timeline_item->getText());
 								$mirror_service->timeline->patch($timeline_item_id, $patch);
 
@@ -212,13 +212,13 @@
 								);
 								wp_update_post($my_post);
 								
-								$new_timeline_item = new Google_TimelineItem();
+								$new_timeline_item = new Google_Service_Mirror_TimelineItem();
 								if ($isMovie) {
 									$new_timeline_item->setText("[wpForGlass] Movie Downloaded From Queaue");
 								} else {
 									$new_timeline_item->setText("[wpForGlass] Image Downloaded From Queaue");
 								}
-								$notification = new Google_NotificationConfig();
+								$notification = new Google_Service_Mirror_NotificationConfig();
 							    $notification->setLevel("DEFAULT");
 
 								$new_timeline_item->setNotification($notification);

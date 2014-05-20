@@ -16,20 +16,27 @@
 	
 	$myGlass = new WpForGlass();
 	$client = $myGlass->get_google_api_client();
+	// We set offline access to get the refresh token.
+	// This prevents us from needing to re-authenticate all the time.
+	$client->setAccessType("offline");
+	$client->setApprovalPrompt("force");
 
 	if (isset($_GET['code'])) {
 		// Handle step 2 of the OAuth 2.0 dance - code exchange
 		try {
 			$myGlass->logError('doing code exchange');
-			
-			$client->authenticate();
+			// In 1.0.0, default changed from offline to online.
+			// We set offline access to get the refresh token.
+			$client->setAccessType("offline");
+			$client->setApprovalPrompt("force");
+			$client->authenticate($_GET['code']);
 			$access_token = $client->getAccessToken();
 			$idGlassPress = new WpForGlass();
 	
 			// Use the identity service to get their ID
 			$identity_client = $idGlassPress->get_google_api_client();
 			$identity_client->setAccessToken($access_token);
-			$identity_service = new Google_Oauth2Service($identity_client);
+			$identity_service = new Google_Service_Oauth2($identity_client);
 	
 			$user = $identity_service->userinfo->get();
 			$user_id = $user->getId();

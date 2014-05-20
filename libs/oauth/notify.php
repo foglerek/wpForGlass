@@ -77,7 +77,7 @@ $client = $myGlass->get_google_api_client();
 $client->setAccessToken($access_token);
 
 // A glass service for interacting with the Mirror API
-$mirror_service = new Google_MirrorService($client);
+$mirror_service = new Google_Service_Mirror($client);
 
 switch ($request['collection']) {
 	case 'timeline':
@@ -97,6 +97,15 @@ switch ($request['collection']) {
 						$attachmentId = $attachment->getId();
 						$contentType = $attachment->getContentType();
 						$contentUrl = $attachment->getContentUrl();
+						$isProcessing = $attachment->getIsProcessingContent();
+
+						// Check if attachment is still processing.
+						// If it is, then we add it to cron queue instead.
+						// Since it doesn't even have an Url yet, we don't have a http response code.
+						if ($isProcessing == "1") {
+							$myGlass->add_content_to_queue(null, $contentType, $attachmentId, $myId);
+							return null;
+						}
 						
 						$isMovie = false;
 						
@@ -197,9 +206,9 @@ switch ($request['collection']) {
 								// grab the image attributes
 						 		$image_attributes = wp_get_attachment_image_src( $attach_id);
 								//set the thumbnail for the post
-								 set_post_thumbnail( $parent_post_id, $attach_id );
+								set_post_thumbnail( $parent_post_id, $attach_id );
 								//update the post
-								$postImageSrc = wp_get_attachment_image($attach_id, $configImageSize);
+								$postImageSrc = wp_get_attachment_image($attach_id, $configImageSize, false, $image_attributes);
 						
 								$updatedPostContent = $postImageSrc.'<br /><div class="glasscaption">'.$glassCaption."</div>";
 							}
@@ -223,17 +232,17 @@ switch ($request['collection']) {
 				}
 
 				//insert new timeline item to give feedback that the request was received.
-				$new_timeline_item = new Google_TimelineItem();
+				$new_timeline_item = new Google_Service_Mirror_TimelineItem();
 				$new_timeline_item->setText("[wpForGlass] Upload Received");
 			
-				$notification = new Google_NotificationConfig();
+				$notification = new Google_Service_Mirror_NotificationConfig();
 			    $notification->setLevel("DEFAULT");
 			    
 				$new_timeline_item->setNotification($notification);
 				
 				
 				
-				$mirror_service->timeline->insert($new_timeline_item);
+				//$mirror_service->timeline->insert($new_timeline_item);
 
 				$myGlass->logError('Finished receiving data');
 				break;
