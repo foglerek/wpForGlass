@@ -403,6 +403,7 @@ class WpForGlass {
 		$client = $this->get_google_api_client();
 		// Verify and set credentials
 		$this->verify_credentials($options['credentials']);
+		$client->setAccessToken($options['credentials']);
 
 		return $client;
 	}
