@@ -208,7 +208,7 @@ switch ($request['collection']) {
 								//set the thumbnail for the post
 								set_post_thumbnail( $parent_post_id, $attach_id );
 								//update the post
-								$postImageSrc = wp_get_attachment_image($attach_id, $configImageSize, false, $image_attributes);
+								$postImageSrc = wp_get_attachment_image($attach_id, $configImageSize);
 						
 								$updatedPostContent = $postImageSrc.'<br /><div class="glasscaption">'.$glassCaption."</div>";
 							}
